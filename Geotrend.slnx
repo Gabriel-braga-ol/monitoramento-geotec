@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Geotrend.API/Geotrend.API.csproj" />
+    <Project Path="src/Geotrend.Application/Geotrend.Application.csproj" />
+    <Project Path="src/Geotrend.Domain/Geotrend.Domain.csproj" />
+    <Project Path="src/Geotrend.Infrastructure/Geotrend.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Geotrend.UnitTests/Geotrend.UnitTests.csproj" />
+  </Folder>
+</Solution>
