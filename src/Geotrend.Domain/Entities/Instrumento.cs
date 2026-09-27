@@ -14,10 +14,10 @@ public class Instrumento
     
     public Guid BarragemId { get; private set; }
     
-    public IReadOnlyCollection<Leitura> Leituras => _leitura.AsReadOnly();
-    
     // guadra as medições feitas pelos instrumentos
-    private readonly List<Leitura> _leitura = new(); 
+    private readonly List<Leitura> _leituras = new List<Leitura>();
+
+    public IReadOnlyCollection<Leitura> Leituras => _leituras;
     
     private Instrumento() { }
 
@@ -38,5 +38,10 @@ public class Instrumento
         LimiteAlerta = limiteAlerta;
         LimiteEmergencia = limiteEmergencia;
         BarragemId = barragemId;
+    }
+
+    public Leitura AdicionarLeitura(double valor)
+    {
+        return new Leitura(Id, valor, this);
     }
 }

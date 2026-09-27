@@ -28,7 +28,7 @@ public class LeituraService : ILeituraService
         }
 
         // 2. Cria a entidade Leitura (que calcula seu próprio Status automaticamente)
-        var leitura = new Leitura(instrumento.Id, dto.Valor, instrumento);
+        var leitura = instrumento.AdicionarLeitura(dto.Valor);
 
         // 3. Persiste a leitura no repositório
         await _leituraRepository.AdicionarAsync(leitura);

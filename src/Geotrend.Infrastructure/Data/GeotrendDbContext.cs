@@ -47,6 +47,10 @@ public class GeotrendDbContext : DbContext
                 .WithOne()
                 .HasForeignKey(l => l.InstrumentoId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            builder.Metadata
+                .FindNavigation(nameof(Instrumento.Leituras))?
+                .SetPropertyAccessMode(PropertyAccessMode.Field);
         });
         
         // Configurandoo a tabela Leitura
