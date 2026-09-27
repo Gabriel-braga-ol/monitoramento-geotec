@@ -1,0 +1,38 @@
+using Geotrend.Application.DTOs;
+using Geotrend.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Geotrend.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class BarragemController : ControllerBase
+{
+    private readonly IBarragemService _barragemService;
+
+    public BarragemController(IBarragemService barragemService)
+    {
+        _barragemService = barragemService;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Criar([FromBody] CriarBarragemInputDto dto)
+    {
+        try
+        {
+            var resultado = await _barragemService.CriarAsync(dto);
+            return CreatedAtAction(nameof(Criar), new { id = resultado.Id }, resultado);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ObterTodas()
+    {
+        var barragens = await _barragemService.ObterTodasAsync();
+        return Ok(barragens);
+    }
+}
