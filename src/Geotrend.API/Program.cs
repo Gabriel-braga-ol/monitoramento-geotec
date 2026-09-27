@@ -18,6 +18,8 @@ builder.Services.AddScoped<IInstrumentoRepository, InstrumentoRepository>();
 builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 
 // 3. Injeção de Dependência - Serviços (Aplicação)
+builder.Services.AddScoped<IBarragemService, BarragemService>();
+builder.Services.AddScoped<IInstrumentoService, InstrumentoService>();
 builder.Services.AddScoped<ILeituraService, LeituraService>();
 
 // 4. Configurar Controllers e Swagger
