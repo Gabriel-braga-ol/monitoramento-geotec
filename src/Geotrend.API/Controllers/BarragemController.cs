@@ -20,7 +20,7 @@ public class BarragemController : ControllerBase
     {
         try
         {
-            var resultado = await _barragemService.CriarAsync(dto);
+            var resultado = await _barragemService.CriarBarragemAsync(dto);
             return CreatedAtAction(nameof(Criar), new { id = resultado.Id }, resultado);
         }
         catch (ArgumentException ex)
@@ -34,5 +34,15 @@ public class BarragemController : ControllerBase
     {
         var barragens = await _barragemService.ObterTodasAsync();
         return Ok(barragens);
+    }
+
+    [HttpGet("{id}/status")]
+    public async Task<IActionResult> ObterStatusResumo(Guid id)
+    {
+        var resultado = await _barragemService.ObterStatusResumoAsync(id);
+        if (resultado == null)
+            return NotFound(new { mensagem = "Barragem não encontrada." });
+
+        return Ok(resultado);
     }
 }
