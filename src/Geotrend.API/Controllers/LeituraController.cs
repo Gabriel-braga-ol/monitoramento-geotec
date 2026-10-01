@@ -32,4 +32,12 @@ public class LeituraController : ControllerBase
             return StatusCode(500, new { mensagem = "Erro interno ao processar leitura.", detalhe = ex.Message });
         }
     }
+
+    [HttpGet("instrumento/{instrumentoId}")]
+    public async Task<IActionResult> ObterHistorico(
+        Guid instrumentoId, [FromQuery] ObterLeiturasFiltroInputDto filtro)
+    {
+        var historico = await _leituraService.ObterHistoricoPorInstrumentoAsync(instrumentoId, filtro);
+        return Ok(historico);
+    }
 }

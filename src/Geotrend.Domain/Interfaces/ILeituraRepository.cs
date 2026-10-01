@@ -7,5 +7,10 @@ public interface ILeituraRepository
     // recebe uma nova leitura e adiciona na base de dados
     Task AdicionarAsync(Leitura leitura);
     // recebe um instrumento e a qtd e devolve uma coleção/lista com a qtd leituras
-    Task<IEnumerable<Leitura>> ObterUltimasLeiturasPorInstrumentoAsync(Guid instrumentoId, int quantidade);
+    Task<IEnumerable<Leitura>> ObterUltimasLeiturasPorInstrumentoAsync(
+        Guid instrumentoId, 
+        DateTime? dataInicio,
+        DateTime? dataFim,
+        int pagina,
+        int tamanhoPagina);
 }

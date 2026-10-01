@@ -6,4 +6,7 @@ namespace Geotrend.Application.Interfaces;
 public interface ILeituraService
 {
     Task<LeituraOutputDto> RegistrarLeituraAsync(RegistrarLeituraInputDto dto);
+    Task<IEnumerable<LeituraOutputDto>> ObterHistoricoPorInstrumentoAsync(
+        Guid instrumentoId, 
+        ObterLeiturasFiltroInputDto filtro);
 }

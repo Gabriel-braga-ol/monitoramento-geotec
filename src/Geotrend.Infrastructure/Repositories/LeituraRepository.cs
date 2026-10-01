@@ -20,13 +20,26 @@ public class LeituraRepository : ILeituraRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<IEnumerable<Leitura>> ObterUltimasLeiturasPorInstrumentoAsync(Guid instrumentoId, int quantidade)
+    public async Task<IEnumerable<Leitura>> ObterUltimasLeiturasPorInstrumentoAsync(
+        Guid instrumentoId, 
+        DateTime? dataInicio,
+        DateTime? dataFim,
+        int pagina,
+        int tamanhoPagina)
     {
-        return await _context.Leituras
-            .AsNoTracking()
-            .Where(l => l.InstrumentoId == instrumentoId)
-            .OrderByDescending(l => l.DataHora) // Ordena da mais recente para a mais antiga
-            .Take(quantidade) // Limita a quantidade para plotar gráficos leves no React
+        var query = _context.Leituras.AsNoTracking()
+            .Where(l => l.InstrumentoId == instrumentoId);
+
+        if (dataInicio.HasValue)
+            query = query.Where(l => l.DataHora >= DateTime.SpecifyKind(dataInicio.Value, DateTimeKind.Utc));
+
+        if (dataFim.HasValue)
+            query = query.Where(l => l.DataHora <= DateTime.SpecifyKind(dataFim.Value, DateTimeKind.Utc));
+
+        return await query
+            .OrderByDescending(l => l.DataHora)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
             .ToListAsync();
     }
 }
