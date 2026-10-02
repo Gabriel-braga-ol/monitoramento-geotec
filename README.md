@@ -33,6 +33,41 @@ O objetivo do projeto é consolidar dados do banco de dados em um painel simples
 
 ---
 
+## Como Executar
+
+### 1. Configurar e Executar o Backend
+
+1. Clone o repositório:
+   git clone https://github.com/Gabriel-braga-ol/monitoramento-geotec.git
+   cd Geotrend
+
+2. Certifique-se de que o banco de dados PostgreSQL esteja em execução e configure a string de conexão no arquivo src/Geotrend.API/appsettings.json:
+   {
+      "ConnectionStrings": {
+         "DefaultConnection": "Host=localhost;Database=geotrend_db;Username=postgres;Password=sua_senha"
+      }
+   }
+
+3. Execute o script SQL de carga contido no projeto para criar e popular as tabelas no banco de dados.
+
+4. Execute a API:
+   dotnet run --project src/Geotrend.API
+
+   A API iniciará na porta configurada, geralmente http://localhost:5000 ou https://localhost:7001.
+
+### 2. Configurar e Executar o Frontend
+
+1. Abra um novo terminal e navegue até a pasta do frontend:
+   cd geotrend-web
+
+2. Instale as dependências do projeto:
+   npm install
+
+3. Inicie o servidor de desenvolvimento:
+   npm run dev
+
+4. Acesse o endereço informado no terminal, normalmente http://localhost:5173.
+
 ## 📁 Estrutura do Projeto
 
 O repositório é organizado no modelo de monorepo simplificado:
