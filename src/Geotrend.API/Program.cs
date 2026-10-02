@@ -7,36 +7,46 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurar o DbContext com PostgreSQL
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<GeotrendDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-// 2. Injeção de Dependência - Repositórios (Infraestrutura)
-builder.Services.AddScoped<IBarragemRepository, BarragemRepository>();
-builder.Services.AddScoped<IInstrumentoRepository, InstrumentoRepository>();
-builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
-
-// 3. Injeção de Dependência - Serviços (Aplicação)
-builder.Services.AddScoped<IBarragemService, BarragemService>();
-builder.Services.AddScoped<IInstrumentoService, InstrumentoService>();
-builder.Services.AddScoped<ILeituraService, LeituraService>();
-
-// 4. Configurar Controllers e Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+// DbContext da aplicação
+builder.Services.AddDbContext<GeotrendDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Injeção de Dependências dos Repositórios
+builder.Services.AddScoped<IBarragemRepository, BarragemRepository>();
+builder.Services.AddScoped<IInstrumentoRepository, InstrumentoRepository>();
+builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
+
+// Injeção de Dependências dos Serviços
+builder.Services.AddScoped<IBarragemService, BarragemService>();
+builder.Services.AddScoped<IInstrumentoService, InstrumentoService>();
+builder.Services.AddScoped<ILeituraService, LeituraService>();
+
 var app = builder.Build();
 
-// Configuração do Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApp");
+
 app.UseAuthorization();
 app.MapControllers();
 

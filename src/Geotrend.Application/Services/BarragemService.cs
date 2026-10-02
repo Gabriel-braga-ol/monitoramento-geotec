@@ -61,47 +61,63 @@ public class BarragemService : IBarragemService
         var barragem = await _barragemRepository.ObterPorIdAsync(barragemId);
         if (barragem == null) return null;
 
-        var instrumentos = await _instrumentoRepository.ObterPorBarragemIdAsync(barragemId);
+        var instrumentosResumo = new List<InstrumentoResumoDto>();
 
-        var resumo = new BarragemStatusOutputDto
+        foreach (var inst in barragem.Instrumentos)
         {
-            BarragemId = barragem.Id,
-            NomeBarragem = barragem.Nome,
-            TotalInstrumentos = instrumentos.Count()
-        };
+            var ultimaLeitura = inst.Leituras?
+                .OrderByDescending(l => l.DataHora)
+                .FirstOrDefault();
+            
+            string statusNome = ultimaLeitura != null 
+                ? ConvertEnumStatus(ultimaLeitura.Status) 
+                : "Normal";
 
-        var piorStatus = NivelAlerta.Normal;
-
-        foreach (var inst in instrumentos)
-        {
-            var ultimaLeitura = inst.Leituras.OrderByDescending(l => l.DataHora).FirstOrDefault();
-            var statusInst = ultimaLeitura?.Status ?? NivelAlerta.Normal;
-
-            switch (statusInst)
-            {
-                case NivelAlerta.Atencao: resumo.QuantidadeAtencao++; break;
-                case NivelAlerta.Alerta: resumo.QuantidadeAlerta++; break;
-                case NivelAlerta.Emergencia: resumo.QuantidadeEmergencia++; break;
-                default: resumo.QuantidadeNormal++; break;
-            }
-
-            if (statusInst > piorStatus)
-            {
-                piorStatus = statusInst;
-            }
-
-            resumo.Instrumentos.Add(new InstrumentoResumoDto
+            instrumentosResumo.Add(new InstrumentoResumoDto
             {
                 Id = inst.Id,
                 Codigo = inst.Codigo,
                 Tipo = inst.Tipo.ToString(),
-                UltimoStatus = statusInst.ToString(),
+                UltimoStatus = statusNome,
                 UltimoValor = ultimaLeitura?.Valor,
                 DataUltimaLeitura = ultimaLeitura?.DataHora
             });
         }
+        
+        int normal = instrumentosResumo.Count(i => i.UltimoStatus == "Normal");
+        int atencao = instrumentosResumo.Count(i => i.UltimoStatus == "Atencao");
+        int alerta = instrumentosResumo.Count(i => i.UltimoStatus == "Alerta");
+        int emergencia = instrumentosResumo.Count(i => i.UltimoStatus == "Emergencia");
 
-        resumo.StatusGlobal = piorStatus.ToString();
-        return resumo;
+        // Define o Status Global da Barragem com base no pior status encontrado
+        string statusGlobal = "Normal";
+        if (emergencia > 0) statusGlobal = "Emergencia";
+        else if (alerta > 0) statusGlobal = "Alerta";
+        else if (atencao > 0) statusGlobal = "Atencao";
+
+        return new BarragemStatusOutputDto
+        {
+            BarragemId = barragem.Id,
+            NomeBarragem = barragem.Nome,
+            StatusGlobal = statusGlobal,
+            TotalInstrumentos = instrumentosResumo.Count,
+            QuantidadeNormal = normal,
+            QuantidadeAtencao = atencao,
+            QuantidadeAlerta = alerta,
+            QuantidadeEmergencia = emergencia,
+            Instrumentos = instrumentosResumo
+        };
+    }
+    
+    private string ConvertEnumStatus(NivelAlerta status)
+    {
+        return status switch
+        {
+            NivelAlerta.Normal => "Normal",
+            NivelAlerta.Atencao => "Atencao",
+            NivelAlerta.Alerta => "Alerta",
+            NivelAlerta.Emergencia => "Emergencia",
+            _ => status.ToString()
+        };
     }
 }

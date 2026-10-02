@@ -35,6 +35,14 @@ public class BarragemController : ControllerBase
         var barragens = await _barragemService.ObterTodasAsync();
         return Ok(barragens);
     }
+    
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> ObterPorId(Guid id)
+    {
+        var resultado = await _barragemService.ObterPorIdAsync(id);
+        if (resultado == null) return NotFound();
+        return Ok(resultado);
+    }
 
     [HttpGet("{id}/status")]
     public async Task<IActionResult> ObterStatusResumo(Guid id)
