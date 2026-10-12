@@ -27,6 +27,10 @@ public class Instrumento
         if (string.IsNullOrWhiteSpace(codigo))
             throw new ArgumentException("O código do instrumento é obrigatório.", nameof(codigo));
 
+        if (!Enum.IsDefined(typeof(TipoInstrumento), tipo))
+            throw new ArgumentException(
+                "O tipo de instrumento informado é inválido.", nameof(tipo));
+
         if (limiteAtencao >= limiteAlerta || limiteAlerta >= limiteEmergencia)
             throw new ArgumentException(
                 "Os limites do instrumento devem seguir a ordem crescente: Atenção < Alerta < Emergência.");
