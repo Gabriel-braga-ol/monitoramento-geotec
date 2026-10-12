@@ -35,60 +35,162 @@ O objetivo do projeto é consolidar dados do banco de dados em um painel simples
 
 ## Como Executar
 
+### Pré-requisitos
+
+- SDK .NET 10.
+- PostgreSQL em execução, com usuário e senha configurados.
+- Node.js 24 e npm para o frontend.
+- Git.
+
 ### 1. Configurar e Executar o Backend
 
 1. Clone o repositório:
+
+   ```bash
    git clone https://github.com/Gabriel-braga-ol/monitoramento-geotec.git
-   cd Geotrend
+   cd monitoramento-geotec
+   ```
 
-2. Certifique-se de que o banco de dados PostgreSQL esteja em execução e configure a string de conexão no arquivo src/Geotrend.API/appsettings.json:
+2. Configure a conexão local com o PostgreSQL usando os User Secrets do projeto da API. Substitua `sua_senha` pela senha do seu usuário e ajuste os demais campos conforme seu ambiente:
+
+   ```bash
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=geotrend_db;Username=postgres;Password=sua_senha" --project src/Geotrend.API
+   ```
+
+   O projeto já possui um `UserSecretsId`. Essa configuração é carregada no ambiente `Development` e mantém a senha fora dos arquivos versionados. O `appsettings.json` contém somente a configuração base, sem senha.
+
+3. Restaure as dependências e instale a ferramenta do Entity Framework Core, caso ainda não tenha uma versão 10 instalada:
+
+   ```bash
+   dotnet restore
+   dotnet tool install --global dotnet-ef --version 10.0.12
+   ```
+
+   Se precisar ajustar uma instalação global existente, use `dotnet tool update --global dotnet-ef --version 10.0.12`.
+
+4. Na raiz do repositório, aplique as migrations existentes:
+
+   ```bash
+   dotnet ef database update --project src/Geotrend.Infrastructure --startup-project src/Geotrend.API -- --environment Development
+   ```
+
+   Esse comando cria as tabelas e, se necessário, o banco de dados, desde que o usuário configurado tenha permissão para criá-lo. Caso contrário, crie previamente o banco `geotrend_db` com um usuário autorizado.
+
+   As migrations não inserem dados de exemplo. O repositório não possui script SQL de carga; o cadastro inicial é descrito abaixo.
+
+5. Execute a API com o perfil HTTP:
+
+   ```bash
+   dotnet run --project src/Geotrend.API --launch-profile http
+   ```
+
+   A API ficará disponível em `http://localhost:5196`, e o Swagger em `http://localhost:5196/swagger`.
+
+### 2. Cadastrar Dados para Visualizar o Painel
+
+Com a API em execução, abra o Swagger e use **Try it out** e **Execute** nos endpoints abaixo, nesta ordem. Os nomes e limites são fictícios, apenas para demonstrar o fluxo.
+
+1. Em `POST /api/Barragem`, cadastre uma barragem:
+
+   ```json
    {
-      "ConnectionStrings": {
-         "DefaultConnection": "Host=localhost;Database=geotrend_db;Username=postgres;Password=sua_senha"
-      }
+     "nome": "Barragem de demonstração",
+     "localizacao": "Local fictício"
    }
+   ```
 
-3. Execute o script SQL de carga contido no projeto para criar e popular as tabelas no banco de dados.
+   Copie o `id` retornado na resposta.
 
-4. Execute a API:
-   dotnet run --project src/Geotrend.API
+2. Em `POST /api/Instrumento`, cadastre um instrumento, substituindo `ID_DA_BARRAGEM` pelo ID obtido:
 
-   A API iniciará na porta configurada, geralmente http://localhost:5000 ou https://localhost:7001.
+   ```json
+   {
+     "codigo": "PZ-01",
+     "tipo": 1,
+     "limiteAtencao": 10,
+     "limiteAlerta": 15,
+     "limiteEmergencia": 20,
+     "barragemId": "ID_DA_BARRAGEM"
+   }
+   ```
 
-### 2. Configurar e Executar o Frontend
+   O tipo `1` corresponde a um piezômetro. Copie o `id` do instrumento retornado na resposta.
 
-1. Abra um novo terminal e navegue até a pasta do frontend:
+3. Em `POST /api/Leitura`, registre uma leitura, substituindo `ID_DO_INSTRUMENTO`:
+
+   ```json
+   {
+     "instrumentoId": "ID_DO_INSTRUMENTO",
+     "valor": 12
+   }
+   ```
+
+   Com esses limites, o status retornado será `Atencao`. O painel deverá mostrar um instrumento em atenção na barragem cadastrada.
+
+### 3. Configurar e Executar o Frontend
+
+1. Abra um novo terminal na raiz do repositório e navegue até a pasta do frontend:
+
+   ```bash
    cd geotrend-web
+   ```
 
-2. Instale as dependências do projeto:
-   npm install
+2. Instale as dependências nas versões registradas no lockfile:
+
+   ```bash
+   npm ci
+   ```
 
 3. Inicie o servidor de desenvolvimento:
-   npm run dev
 
-4. Acesse o endereço informado no terminal, normalmente http://localhost:5173.
+   ```bash
+   npm run dev -- --port 5173 --strictPort
+   ```
+
+4. Acesse `http://localhost:5173`. Se o painel já estava aberto antes dos cadastros, recarregue a página para buscar a lista de barragens novamente.
+
+O frontend está configurado em `src/services/api.ts` para acessar `http://localhost:5196/api`. A política CORS da API permite a origem `http://localhost:5173`; por isso, mantenha esses endereços ao executar localmente. Se a porta 5173 estiver ocupada, libere-a antes de iniciar o frontend.
+
+### 4. Executar os Testes
+
+Na raiz do repositório, execute os testes de unidade do backend:
+
+```bash
+dotnet test
+```
+
+Na pasta `geotrend-web`, execute o build e a análise estática do frontend:
+
+```bash
+npm run build
+npm run lint
+```
 
 ## 📁 Estrutura do Projeto
 
 O repositório é organizado no modelo de monorepo simplificado:
 
 ```text
-Geotrend/
+monitoramento-geotec/
 ├── geotrend-web/             # Aplicação Frontend (React + Vite)
 │   ├── src/
 │   │   ├── assets/           # Imagens e recursos estáticos
+│   │   ├── components/
+│   │   │   └── StatusBadge.tsx # Componente visual para exibição de status
 │   │   ├── services/         # Configuração da API (axios)
 │   │   ├── App.tsx           # Dashboard principal
-│   │   ├── StatusBadge.tsx   # Componente visual para exibições de status
 │   │   └── main.tsx          # Ponto de entrada do React
 │   ├── package.json
 │   └── vite.config.ts
 │
-└── src/                      # Aplicação Backend (.NET Clean Architecture)
-    ├── Geotrend.API/         # Controllers e Program.cs (Ponto de entrada)
-    ├── Geotrend.Application/ # DTOs, Interfaces e Serviços
-    ├── Geotrend.Domain/      # Entidades do domínio (Barragem, Instrumento, Leitura) e Enums
-    └── Geotrend.Infrastructure/ # DbContext e Repositórios com EF Core
+├── src/                      # Aplicação Backend (.NET Clean Architecture)
+│   ├── Geotrend.API/         # Controllers e Program.cs (Ponto de entrada)
+│   ├── Geotrend.Application/ # DTOs, Interfaces e Serviços
+│   ├── Geotrend.Domain/      # Entidades do domínio (Barragem, Instrumento, Leitura) e Enums
+│   └── Geotrend.Infrastructure/ # DbContext, migrations e repositórios com EF Core
+├── tests/
+│   └── Geotrend.UnitTests/   # Testes de unidade do backend
+└── Geotrend.slnx            # Solução .NET
 ```
 ---
 ## Aprendizados e objetivos do projetos
