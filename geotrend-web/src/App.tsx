@@ -33,48 +33,116 @@ export interface Barragem {
 
 export default function App() {
     const [barragens, setBarragens] = useState<Barragem[]>([]);
-    const [barragemSelecionadaId, setBarragemSelecionadaId] = useState<string>('');
-    const [statusResumo, setStatusResumo] = useState<BarragemStatus | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [erroApi, setErroApi] = useState<string | null>(null);
+    const [consulta, setConsulta] = useState({
+        barragemId: '',
+        versao: 0,
+    });
 
-    // 1. Carrega a lista de barragens da API
+    const [resultado, setResultado] = useState<{
+        barragemId: string;
+        versao: number;
+        dados: BarragemStatus | null;
+        erro: string | null;
+    } | null>(null);
+
+    const [erroLista, setErroLista] = useState<string | null>(null);
+
+    const { barragemId: barragemSelecionadaId, versao } = consulta;
+
+    const resultadoAtual =
+        resultado?.barragemId === barragemSelecionadaId &&
+            resultado?.versao === versao
+            ? resultado
+            : null;
+
+    const statusResumo = resultadoAtual?.dados ?? null;
+    const erroApi = erroLista ?? resultadoAtual?.erro ?? null;
+    const loading =
+        Boolean(barragemSelecionadaId) && resultadoAtual === null;
+
+    const setBarragemSelecionadaId = (barragemId: string) => {
+        setConsulta((anterior) => ({
+            barragemId,
+            versao: anterior.versao + 1,
+        }));
+    };
+
+    const carregarResumo = () => {
+        if (!barragemSelecionadaId || loading) return;
+
+        setConsulta((anterior) => ({
+            ...anterior,
+            versao: anterior.versao + 1,
+        }));
+    };
+
+    // Carrega a lista de barragens.
     useEffect(() => {
-        setErroApi(null);
-        api.get<Barragem[]>('/Barragem')
+        const controller = new AbortController();
+
+        api.get<Barragem[]>('/Barragem', {
+            signal: controller.signal,
+        })
             .then((res) => {
-                if (res.data && res.data.length > 0) {
-                    setBarragens(res.data);
-                    setBarragemSelecionadaId(res.data[0].id);
+                if (controller.signal.aborted) return;
+
+                setBarragens(res.data);
+
+                if (res.data.length > 0) {
+                    setConsulta({
+                        barragemId: res.data[0].id,
+                        versao: 0,
+                    });
                 } else {
-                    setErroApi('Nenhuma barragem cadastrada no banco de dados da API.');
+                    setErroLista('Nenhuma barragem cadastrada.');
                 }
             })
             .catch((err) => {
-                console.error('Erro ao conectar com a API:', err);
-                setErroApi('Não foi possível conectar à API. Verifique se a API .NET está rodando na porta 5196.');
+                if (controller.signal.aborted) return;
+
+                console.error('Erro ao carregar barragens:', err);
+                setErroLista(
+                    'Não foi possível carregar as barragens. Recarregue a página.'
+                );
             });
+
+        return () => controller.abort();
     }, []);
 
-    // 2. Carrega o resumo da barragem selecionada
-    const carregarResumo = () => {
-        if (!barragemSelecionadaId) return;
-        setLoading(true);
-        setErroApi(null);
-        api.get<BarragemStatus>(`/Barragem/${barragemSelecionadaId}/status`)
-            .then((res) => setStatusResumo(res.data))
-            .catch((err) => {
-                console.error('Erro ao carregar resumo:', err);
-                setErroApi('Erro ao obter os dados de status da barragem.');
-            })
-            .finally(() => setLoading(false));
-    };
-
+    // Carrega o resumo da seleção e atualização atuais.
     useEffect(() => {
-        if (barragemSelecionadaId) {
-            carregarResumo();
-        }
-    }, [barragemSelecionadaId]);
+        if (!barragemSelecionadaId) return;
+
+        const controller = new AbortController();
+
+        api.get<BarragemStatus>(
+            `/Barragem/${barragemSelecionadaId}/status`,
+            { signal: controller.signal }
+        )
+            .then((res) => {
+                if (controller.signal.aborted) return;
+
+                setResultado({
+                    barragemId: barragemSelecionadaId,
+                    versao,
+                    dados: res.data,
+                    erro: null,
+                });
+            })
+            .catch((err) => {
+                if (controller.signal.aborted) return;
+
+                console.error('Erro ao carregar resumo:', err);
+                setResultado({
+                    barragemId: barragemSelecionadaId,
+                    versao,
+                    dados: null,
+                    erro: 'Erro ao carregar o resumo. Tente atualizar novamente.',
+                });
+            });
+
+        return () => controller.abort();
+    }, [barragemSelecionadaId, versao]);
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-6">
@@ -170,37 +238,37 @@ export default function App() {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-slate-400">
                                 <thead className="bg-slate-950/50 text-xs uppercase text-slate-400 border-b border-slate-800">
-                                <tr>
-                                    <th className="px-6 py-3.5">Código</th>
-                                    <th className="px-6 py-3.5">Tipo</th>
-                                    <th className="px-6 py-3.5">Última Leitura</th>
-                                    <th className="px-6 py-3.5">Status</th>
-                                </tr>
+                                    <tr>
+                                        <th className="px-6 py-3.5">Código</th>
+                                        <th className="px-6 py-3.5">Tipo</th>
+                                        <th className="px-6 py-3.5">Última Leitura</th>
+                                        <th className="px-6 py-3.5">Status</th>
+                                    </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800/60">
-                                {statusResumo.instrumentos.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
-                                            Nenhum instrumento cadastrado nesta barragem.
-                                        </td>
-                                    </tr>
-                                )}
-                                {statusResumo.instrumentos?.map((inst) => (
-                                    <tr key={inst.id} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-200">{inst.codigo}</td>
-                                        <td className="px-6 py-4">{inst.tipo}</td>
-                                        <td className="px-6 py-4">
-                                            {inst.ultimoValor !== null && inst.ultimoValor !== undefined ? (
-                                                <span className="text-slate-200 font-medium">{inst.ultimoValor}</span>
-                                            ) : (
-                                                <span className="text-slate-600 italic">Sem leituras</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <StatusBadge status={inst.ultimoStatus} />
-                                        </td>
-                                    </tr>
-                                ))}
+                                    {statusResumo.instrumentos.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                                Nenhum instrumento cadastrado nesta barragem.
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {statusResumo.instrumentos?.map((inst) => (
+                                        <tr key={inst.id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-slate-200">{inst.codigo}</td>
+                                            <td className="px-6 py-4">{inst.tipo}</td>
+                                            <td className="px-6 py-4">
+                                                {inst.ultimoValor !== null && inst.ultimoValor !== undefined ? (
+                                                    <span className="text-slate-200 font-medium">{inst.ultimoValor}</span>
+                                                ) : (
+                                                    <span className="text-slate-600 italic">Sem leituras</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <StatusBadge status={inst.ultimoStatus} />
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>

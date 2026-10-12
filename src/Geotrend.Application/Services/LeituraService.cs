@@ -18,6 +18,10 @@ public class LeituraService : ILeituraService
 
     public async Task<LeituraOutputDto> RegistrarLeituraAsync(RegistrarLeituraInputDto dto)
     {
+        // Também protege chamadas ao serviço que não passam pela validação da API.
+        var valor = dto.Valor
+            ?? throw new ArgumentException("O valor da leitura é obrigatório.", nameof(dto.Valor));
+
         // Busca o instrumento associado no banco de dados através da interface
         var instrumento = await _instrumentoRepository.ObterPorIdAsync(dto.InstrumentoId);
 
@@ -27,7 +31,7 @@ public class LeituraService : ILeituraService
         }
 
         // Cria a entidade Leitura (que calcula seu próprio Status automaticamente)
-        var leitura = instrumento.AdicionarLeitura(dto.Valor);
+        var leitura = instrumento.AdicionarLeitura(valor);
 
         // Persiste a leitura no repositório
         await _leituraRepository.AdicionarAsync(leitura);
@@ -62,5 +66,4 @@ public class LeituraService : ILeituraService
             Status = l.Status.ToString()
         });
     }
-
 }

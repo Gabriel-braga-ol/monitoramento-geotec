@@ -27,6 +27,10 @@ public class LeituraController : ControllerBase
         {
             return BadRequest(new { mensagem = ex.Message });
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, new { mensagem = "Erro interno ao processar leitura.", detalhe = ex.Message });
