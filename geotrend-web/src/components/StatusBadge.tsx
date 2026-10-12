@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertTriangle, AlertCircle, ShieldAlert } from 'lucide-react';
+import { CheckCircle, AlertTriangle, AlertCircle, ShieldAlert, CircleHelp } from 'lucide-react';
 
 interface StatusBadgeProps {
     status: string;
@@ -16,17 +16,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
                 return { bg: 'bg-orange-500/10 text-orange-400 border-orange-500/20', icon: AlertCircle, label: 'Alerta' };
             case 'Emergencia':
                 return { bg: 'bg-rose-500/10 text-rose-400 border-rose-500/20 animate-pulse', icon: ShieldAlert, label: 'Emergência' };
+            case 'SemLeitura':
+                return { bg: 'bg-slate-500/10 text-slate-300 border-slate-500/20', icon: CircleHelp, label: 'Sem leitura' };
+            case 'SemDados':
+                return { bg: 'bg-slate-500/10 text-slate-300 border-slate-500/20', icon: CircleHelp, label: 'Sem dados' };
             default:
-                return { bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: CheckCircle, label: status };
+                return { bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: CircleHelp, label: status };
         }
     };
 
     const { bg, icon: Icon, label } = getStyles();
 
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${bg}`}>
-      <Icon className="w-3.5 h-3.5" />
-            {label}
+        <span className= {`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${bg}`}>
+    <Icon className="w-3.5 h-3.5" />
+          { label }
     </span>
     );
 };

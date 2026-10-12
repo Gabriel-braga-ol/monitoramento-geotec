@@ -20,5 +20,6 @@ public class BarragemStatusOutputDto
     public int QuantidadeAtencao { get; set; }
     public int QuantidadeAlerta { get; set; }
     public int QuantidadeEmergencia { get; set; }
+    public int QuantidadeSemLeitura { get; set; }
     public List<InstrumentoResumoDto> Instrumentos { get; set; } = new();
 }

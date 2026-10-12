@@ -21,6 +21,7 @@ export interface BarragemStatus {
     quantidadeAtencao: number;
     quantidadeAlerta: number;
     quantidadeEmergencia: number;
+    quantidadeSemLeitura: number;
     instrumentos: InstrumentoResumo[];
 }
 
@@ -125,16 +126,22 @@ export default function App() {
             {/* Painel Principal */}
             {statusResumo ? (
                 <main className="max-w-7xl mx-auto space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
                         <div className="md:col-span-2 bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
                             <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Global da Estrutura</span>
                             <div className="mt-4 flex items-center justify-between">
                                 <div>
                                     <h2 className="text-xl font-bold">{statusResumo.nomeBarragem}</h2>
-                                    <p className="text-xs text-slate-500 mt-1">{statusResumo.totalInstrumentos} instrumentos ativos</p>
+                                    <p className="text-xs text-slate-500 mt-1">{statusResumo.totalInstrumentos} instrumentos cadastrados</p>
                                 </div>
                                 <StatusBadge status={statusResumo.statusGlobal} />
                             </div>
+                            {statusResumo.quantidadeSemLeitura > 0 && (
+                                <p className="text-xs text-slate-400 mt-3">
+                                    Instrumentos sem leitura: {statusResumo.quantidadeSemLeitura}.
+                                    {' '}O status considera somente as leituras disponíveis.
+                                </p>
+                            )}
                         </div>
 
                         <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl">
@@ -148,6 +155,10 @@ export default function App() {
                         <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl">
                             <span className="text-xs text-rose-400 font-medium">Alerta / Emergência</span>
                             <p className="text-2xl font-bold mt-2">{statusResumo.quantidadeAlerta + statusResumo.quantidadeEmergencia}</p>
+                        </div>
+                        <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl">
+                            <span className="text-xs text-slate-300 font-medium">Sem leitura</span>
+                            <p className="text-2xl font-bold mt-2">{statusResumo.quantidadeSemLeitura}</p>
                         </div>
                     </div>
 
@@ -167,6 +178,13 @@ export default function App() {
                                 </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800/60">
+                                {statusResumo.instrumentos.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
+                                            Nenhum instrumento cadastrado nesta barragem.
+                                        </td>
+                                    </tr>
+                                )}
                                 {statusResumo.instrumentos?.map((inst) => (
                                     <tr key={inst.id} className="hover:bg-slate-800/30 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-200">{inst.codigo}</td>

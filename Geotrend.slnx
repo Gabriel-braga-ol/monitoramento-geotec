@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="geotrend-web/src/App.css" />
+    <File Path="geotrend-web/src/App.tsx" />
+    <File Path="geotrend-web/src/components/StatusBadge.tsx" />
+    <File Path="geotrend-web/src/index.css" />
+    <File Path="geotrend-web/src/main.tsx" />
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Geotrend.API/Geotrend.API.csproj" />
     <Project Path="src/Geotrend.Application/Geotrend.Application.csproj" />
